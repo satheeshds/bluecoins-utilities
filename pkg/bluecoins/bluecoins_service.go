@@ -1,9 +1,11 @@
 package bluecoins
 
-import "bluecoins-to-splitwise-go/pkg/model"
+import (
+	"bluecoins-to-splitwise-go/pkg/model"
+	"time"
+)
 
 type BluecoinsService interface {
 	// GetTransactions returns all transactions from Bluecoins
-	GetTransactions() ([]model.Transaction, error)
-	GetTransactionsByDateRange(startDate, endDate string) ([]model.Transaction, error)
+	GetTransactionsAfter(after time.Time) ([]model.Transaction, error)
 }

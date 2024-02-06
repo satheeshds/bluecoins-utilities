@@ -13,6 +13,9 @@ all: test build
 build: 
 	cd $(SRC_PATH) && $(GOBUILD) -o ../../$(BINARY_NAME) -v
 
+build-windows:
+	cd $(SRC_PATH) && GOOS=windows GOARCH=amd64 $(GOBUILD) -o ../../$(BINARY_NAME).exe -v
+
 test: 
 	$(GOTEST) -v ./...
 

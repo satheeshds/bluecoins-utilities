@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 // Implementing the DBService interface
@@ -14,7 +14,7 @@ type DBServiceImpl struct {
 }
 
 func NewDBService(db string) (*DBServiceImpl, error) {
-	dbConn, err := sql.Open("sqlite3", db)
+	dbConn, err := sql.Open("sqlite", db)
 	if err != nil {
 		return nil, err
 	}

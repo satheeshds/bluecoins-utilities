@@ -1,6 +1,7 @@
 package splitwise
 
 import (
+	"bluecoins-to-splitwise-go/pkg/gdrive"
 	"bluecoins-to-splitwise-go/pkg/model"
 	"bytes"
 	"encoding/json"
@@ -8,7 +9,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
+
+type SplitwiseServiceImpl struct {
+	Expense Expense
+	gdrive  gdrive.GDriveServiceImpl
+}
 
 type ExpenseEqualGroupSplit struct {
 	model.SplitwiseCommon
@@ -29,7 +36,71 @@ type ExpenseByShares struct {
 	Users__1__owed_share string `json:"users__1__owed_share"` // "Decimal amount as a string with 2 decimal places. The amount this user owes for the expense"
 }
 
-func (e ExpenseByShares) CreateExpense() error {
+type SplitwiseState struct {
+	LastExpenseDate time.Time `json:"last_expense_date"`
+}
+
+func NewSplitwiseService() (*SplitwiseServiceImpl, error) {
+	driveService, err := gdrive.NewGDriveService()
+	if err != nil {
+		fmt.Printf("error creating gdrive service: %v", err)
+	}
+	service := &SplitwiseServiceImpl{}
+	service.gdrive = *driveService
+	return service, nil
+}
+
+func (s *SplitwiseServiceImpl) GetLastExpenseDate() (time.Time, error) {
+	err := s.gdrive.DownloadFile("splitwise.json", "splitwise.json")
+	defaultDate := time.Now().Local().AddDate(0, 0, -7)
+	if err != nil {
+		fmt.Printf("error downloading splitwise.json: %v \n setting last expense date as last week", err)
+		return defaultDate, nil
+	}
+	file, err := os.Open("splitwise.json")
+	if err != nil {
+		fmt.Printf("error opening splitwise.json: %v \n setting last expense date as last week", err)
+		return defaultDate, err
+	}
+	defer file.Close()
+
+	decoder := json.NewDecoder(file)
+	state := SplitwiseState{}
+	err = decoder.Decode(&state)
+	if err != nil {
+		fmt.Printf("error decoding splitwise.json: %v \n setting last expense date as last week", err)
+		return defaultDate, err
+	}
+	return state.LastExpenseDate, nil
+}
+
+func (s *SplitwiseServiceImpl) SetLastExpenseDate(date time.Time) error {
+	state := SplitwiseState{LastExpenseDate: date}
+	jsonData, err := json.Marshal(state)
+	if err != nil {
+		return err
+	}
+
+	file, err := os.Create("splitwise.json")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.Write(jsonData)
+	if err != nil {
+		return err
+	}
+
+	err = s.gdrive.UploadFile("splitwise.json", "splitwise.json")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (e ExpenseByShares) Create() error {
 	//convert expense to json
 	jsonData, err := json.Marshal(e)
 	if err != nil {
@@ -45,7 +116,7 @@ func (e ExpenseByShares) CreateExpense() error {
 	return nil
 }
 
-func (e ExpenseEqualGroupSplit) CreateExpense() error {
+func (e ExpenseEqualGroupSplit) Create() error {
 	//convert expense to json
 	jsonData, err := json.Marshal(e)
 	if err != nil {

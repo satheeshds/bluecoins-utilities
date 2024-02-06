@@ -82,7 +82,7 @@ func NewGDriveService() (*GDriveServiceImpl, error) {
 	}
 
 	// If modifying these scopes, delete your previously saved token.json.
-	config, err := google.ConfigFromJSON(b, drive.DriveReadonlyScope)
+	config, err := google.ConfigFromJSON(b, drive.DriveScope)
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
@@ -124,4 +124,43 @@ func (g *GDriveServiceImpl) DownloadFile(fileName string, destination string) er
 		return err
 	}
 	return nil
+}
+
+func (g *GDriveServiceImpl) UploadFile(fileName string, source string) error {
+	parentFolderId := "0B2oFE8AhFjn_Q2tZMTdWMFFtbDQ"
+
+	query := fmt.Sprintf("name='%s' and '%s' in parents and trashed=false", fileName, parentFolderId)
+
+	r, err := g.srv.Files.List().Q(query).Do()
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if len(r.Files) > 0 {
+		//update the file
+		file := r.Files[0]
+		_, err = g.srv.Files.Update(file.Id, nil).Media(f).Do()
+	} else {
+		//upload the file
+		file := &drive.File{
+			Name:    fileName,
+			Parents: []string{parentFolderId},
+		}
+		_, err = g.srv.Files.Create(file).Media(f).Do()
+	}
+
+	if err != nil {
+		return err
+	}
+
+	log.Printf("File %s uploaded successfully", fileName)
+
+	return nil
+
 }

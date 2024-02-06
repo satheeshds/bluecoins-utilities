@@ -31,3 +31,9 @@
 .Trashes
 ehthumbs.db
 Thumbs.db
+bluecoins-to-splitwise
+credentials.json
+.env
+token.json
+bluecoins.fydb
+splitwise.json

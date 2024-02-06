@@ -4,7 +4,6 @@ import (
 	"bluecoins-to-splitwise-go/pkg/db"
 	"bluecoins-to-splitwise-go/pkg/gdrive"
 	"bluecoins-to-splitwise-go/pkg/model"
-	"errors"
 	"time"
 )
 
@@ -38,30 +37,6 @@ func NewBluecoinsService() (*BluecoinsServiceImpl, error) {
 	return service, nil
 }
 
-func (b *BluecoinsServiceImpl) GetTransactions() ([]model.Transaction, error) {
-
-	return b.db.GetTransactions(time.Date(2023, time.December, 24, 0, 0, 0, 0, time.UTC))
-	// println(string(file))
-	// Replace this with your actual implementation
-}
-
-func (b *BluecoinsServiceImpl) GetTransactionsByDateRange(startDate, endDate string) ([]model.Transaction, error) {
-	// Parse the dates
-	start, err := time.Parse("2006-01-02", startDate)
-	if err != nil {
-		return nil, err
-	}
-
-	end, err := time.Parse("2006-01-02", endDate)
-	if err != nil {
-		return nil, err
-	}
-
-	//print start and end date
-	println(start.Day())
-	println(end.Day())
-
-	// Replace this with your actual implementation
-	// For example, you might query a database for transactions between start and end
-	return nil, errors.New("not implemented")
+func (b *BluecoinsServiceImpl) GetTransactionsAfter(after time.Time) ([]model.Transaction, error) {
+	return b.db.GetTransactions(after)
 }
