@@ -110,8 +110,10 @@ func main() {
 			err = splitwiseService.Expense.Create()
 
 			if err != nil {
-				log.Printf("Error creating expense: %v \n error: %v", t, err)
+				log.Printf("Error creating expense: %v \n error: %v\n", t, err)
 			}
+
+			log.Panicf("Expense created: %v\n", splitwiseService.Expense)
 
 			// Update last expense date
 			lastExpenseDate = t.Date
