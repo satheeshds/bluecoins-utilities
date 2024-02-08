@@ -13,8 +13,9 @@ import (
 )
 
 type SplitwiseServiceImpl struct {
-	Expense Expense
-	gdrive  gdrive.GDriveServiceImpl
+	Expense      Expense
+	gdrive       gdrive.GDriveServiceImpl
+	accountState map[int]time.Time
 }
 
 type ExpenseEqualGroupSplit struct {
@@ -36,68 +37,50 @@ type ExpenseByShares struct {
 	Users__1__owed_share string `json:"users__1__owed_share"` // "Decimal amount as a string with 2 decimal places. The amount this user owes for the expense"
 }
 
-type SplitwiseState struct {
-	LastExpenseDate time.Time `json:"last_expense_date"`
-}
+// type SplitwiseState struct {
+// 	// AccountId       int       `json:"account_id"`
+// 	LastExpenseDate time.Time `json:"last_expense_date"`
+// }
 
 func NewSplitwiseService() (*SplitwiseServiceImpl, error) {
 	driveService, err := gdrive.NewGDriveService()
 	if err != nil {
-		fmt.Printf("error creating gdrive service: %v", err)
+		fmt.Printf("error creating gdrive service: %v \n", err)
 	}
+	err = driveService.DownloadFile("splitwise.json", "splitwise.json")
+	if err != nil {
+		fmt.Printf("error downloading splitwise.json: %v\n", err)
+	}
+
+	file, err := os.Open("splitwise.json")
+	if err != nil {
+		fmt.Printf("error opening splitwise.json: %v\n", err)
+	}
+	defer file.Close()
+	decoder := json.NewDecoder(file)
+	state := make(map[int]time.Time)
+	err = decoder.Decode(&state)
+	if err != nil {
+		fmt.Printf("error decoding splitwise.json: %v \n", err)
+	}
+
 	service := &SplitwiseServiceImpl{}
 	service.gdrive = *driveService
+	service.accountState = state
 	return service, nil
 }
 
-func (s *SplitwiseServiceImpl) GetLastExpenseDate() (time.Time, error) {
-	err := s.gdrive.DownloadFile("splitwise.json", "splitwise.json")
+func (s *SplitwiseServiceImpl) GetLastExpenseDate(accountId int) (time.Time, error) {
 	defaultDate := time.Now().Local().AddDate(0, 0, -7)
-	if err != nil {
-		fmt.Printf("error downloading splitwise.json: %v \n setting last expense date as last week", err)
-		return defaultDate, nil
+	date, ok := s.accountState[accountId]
+	if ok {
+		return date, nil
 	}
-	file, err := os.Open("splitwise.json")
-	if err != nil {
-		fmt.Printf("error opening splitwise.json: %v \n setting last expense date as last week", err)
-		return defaultDate, err
-	}
-	defer file.Close()
-
-	decoder := json.NewDecoder(file)
-	state := SplitwiseState{}
-	err = decoder.Decode(&state)
-	if err != nil {
-		fmt.Printf("error decoding splitwise.json: %v \n setting last expense date as last week", err)
-		return defaultDate, err
-	}
-	return state.LastExpenseDate, nil
+	return defaultDate, nil
 }
 
-func (s *SplitwiseServiceImpl) SetLastExpenseDate(date time.Time) error {
-	state := SplitwiseState{LastExpenseDate: date}
-	jsonData, err := json.Marshal(state)
-	if err != nil {
-		return err
-	}
-
-	file, err := os.Create("splitwise.json")
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	_, err = file.Write(jsonData)
-	if err != nil {
-		return err
-	}
-
-	err = s.gdrive.UploadFile("splitwise.json", "splitwise.json")
-	if err != nil {
-		return err
-	}
-
-	return nil
+func (s *SplitwiseServiceImpl) SetLastExpenseDate(accountId int, date time.Time) {
+	s.accountState[accountId] = date
 }
 
 func (e ExpenseByShares) Create() error {
@@ -130,6 +113,34 @@ func (e ExpenseEqualGroupSplit) Create() error {
 	}
 
 	return nil
+
+}
+
+func (s *SplitwiseServiceImpl) Close() {
+
+	// Perform cleanup here.
+	// For example, if you have a file that needs to be closed, you can close it here.
+	// If there's an error, return it.
+	jsonData, err := json.Marshal(s.accountState)
+	if err != nil {
+		log.Printf("error marshalling account state: %v", err)
+	}
+
+	file, err := os.Create("splitwise.json")
+	if err != nil {
+		log.Printf("error creating splitwise.json: %v", err)
+	}
+	defer file.Close()
+
+	_, err = file.Write(jsonData)
+	if err != nil {
+		log.Printf("error writing to splitwise.json: %v", err)
+	}
+
+	err = s.gdrive.UploadFile("splitwise.json", "splitwise.json")
+	if err != nil {
+		log.Printf("error uploading splitwise.json: %v", err)
+	}
 
 }
 

@@ -6,5 +6,6 @@ import (
 )
 
 type DBService interface {
-	GetTransactionsAfter(after time.Time) ([]model.Transaction, error)
+	GetTransactionsAfter(after time.Time, accountid int) ([]model.Transaction, error)
+	GetAccounts() ([]model.Account, error)
 }

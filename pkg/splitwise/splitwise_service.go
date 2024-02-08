@@ -3,8 +3,9 @@ package splitwise
 import "time"
 
 type SplitwiseService interface {
-	GetLastExpenseDate() (time.Time, error)
-	SetLastExpenseDate(date time.Time) error
+	GetLastExpenseDate(accountId int) (time.Time, error)
+	SetLastExpenseDate(accountId int, date time.Time)
+	Close()
 }
 
 type Expense interface {
