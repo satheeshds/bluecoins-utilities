@@ -113,7 +113,7 @@ func main() {
 				log.Printf("Error creating expense: %v \n error: %v\n", t, err)
 			}
 
-			log.Panicf("Expense created: %v\n", splitwiseService.Expense)
+			log.Printf("Expense created: %v\n", splitwiseService.Expense)
 
 			// Update last expense date
 			lastExpenseDate = t.Date
