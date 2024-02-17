@@ -7,6 +7,6 @@ import (
 
 type BluecoinsService interface {
 	// GetTransactions returns all transactions from Bluecoins
-	GetTransactionsAfter(after time.Time, accountId int) ([]model.Transaction, error)
+	GetTransactionsAfter(after time.Time, accountId int) ([]model.BluecoinsTransaction, error)
 	GetAccounts() ([]model.Account, error)
 }

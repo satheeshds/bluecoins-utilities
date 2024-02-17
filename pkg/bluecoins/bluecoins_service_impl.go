@@ -37,7 +37,7 @@ func NewBluecoinsService() (*BluecoinsServiceImpl, error) {
 	return service, nil
 }
 
-func (b *BluecoinsServiceImpl) GetTransactionsAfter(after time.Time, accountId int) ([]model.Transaction, error) {
+func (b *BluecoinsServiceImpl) GetTransactionsAfter(after time.Time, accountId int) ([]model.BluecoinsTransaction, error) {
 	return b.db.GetTransactions(after, accountId)
 }
 

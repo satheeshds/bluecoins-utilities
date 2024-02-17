@@ -11,8 +11,8 @@ const (
 	Undefined
 )
 
-// Transaction represents a Bluecoins transaction
-type Transaction struct {
+// BluecoinsTransaction represents a Bluecoins transaction
+type BluecoinsTransaction struct {
 	ID          string
 	Date        time.Time
 	Amount      float32
@@ -21,7 +21,7 @@ type Transaction struct {
 	Labels      []string
 }
 
-func (t *Transaction) GetSplitStatus() SplitStatus {
+func (t *BluecoinsTransaction) GetSplitStatus() SplitStatus {
 	for _, label := range t.Labels {
 		if label == "SplitEqual" {
 			return SplitEqual

@@ -31,7 +31,7 @@ func (m *DBServiceImpl) Close() error {
 	return nil
 }
 
-func (m *DBServiceImpl) GetTransactions(after time.Time, accountId int) ([]model.Transaction, error) {
+func (m *DBServiceImpl) GetTransactions(after time.Time, accountId int) ([]model.BluecoinsTransaction, error) {
 	// Implement your logic here
 	// For now, we'll just return an empty slice and nil error
 	query := `
@@ -59,11 +59,11 @@ func (m *DBServiceImpl) GetTransactions(after time.Time, accountId int) ([]model
 		return nil, err
 	}
 
-	var transactions []model.Transaction
+	var transactions []model.BluecoinsTransaction
 	var amount int
 	var labels string
 	for rows.Next() {
-		var transaction model.Transaction
+		var transaction model.BluecoinsTransaction
 		err = rows.Scan(&transaction.ID, &transaction.Date, &amount, &transaction.Category, &transaction.Description, &labels)
 		if err != nil {
 			return nil, err
