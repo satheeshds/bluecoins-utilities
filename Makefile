@@ -7,7 +7,7 @@ GOCLEAN=$(GOCMD) clean
 SRC_PATH=cmd/bluecoins-to-splitwise-go
 # BUILD_PATH=build
 BINARY_NAME=bluecoins-to-splitwise
-CONVERT_PATH=cmd/bluecoins-convert
+CONVERT_PATH=cmd/bluecoins-convert-go
 CONVERT_BINARY_NAME=bluecoins-convert
 
 all: test build
