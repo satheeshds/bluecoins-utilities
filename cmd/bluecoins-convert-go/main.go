@@ -13,9 +13,11 @@ import (
 
 func main() {
 	var filePath string
+	var verbose bool
 
 	// Define the command-line options
 	flag.StringVar(&filePath, "file", "", "The path to the file")
+	flag.BoolVar(&verbose, "v", false, "Enable verbose")
 
 	// Parse the command-line options
 	flag.Parse()
@@ -45,14 +47,20 @@ func main() {
 
 	g.Cursor = true
 
+	// Open output file
+	f, err := os.OpenFile("output.log", os.O_RDWR|os.O_CREATE, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+
 	mainView := &cui.MainView{
 		Name:         "main",
 		Transactions: transactions,
+		Logfile:      f,
+		Verbose:      verbose,
 	}
 	g.SetManagerFunc(mainView.Layout)
-	if err := mainView.Create(g); err != nil {
-		log.Panicln(err)
-	}
 
 	log.Println("in main loop...")
 	err = g.MainLoop()
@@ -60,13 +68,6 @@ func main() {
 		log.Println("Error in main loop:", err)
 		log.Panicln(err)
 	}
-
-	// // Open output file
-	// f, err := os.OpenFile("output.txt", os.O_RDWR|os.O_CREATE, 0755)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// defer f.Close()
 
 	mainView.GetSelectedTransactions()
 
