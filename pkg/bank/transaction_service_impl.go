@@ -75,7 +75,7 @@ func (t *TransactionServiceImpl) GetBankTransactions(filename string) ([]model.B
 			Date:            date,
 			Description:     record[2],
 			TransactionType: transactionType,
-			Amount:          float32(amount),
+			Amount:          amount,
 		}
 	}
 	return transactions, nil

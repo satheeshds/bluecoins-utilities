@@ -13,5 +13,5 @@ type BankTransaction struct {
 	Date            time.Time
 	Description     string
 	TransactionType TransactionType
-	Amount          float32
+	Amount          float64
 }
