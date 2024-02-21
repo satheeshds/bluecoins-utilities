@@ -1,6 +1,7 @@
 package cui
 
 import (
+	"bluecoins-to-splitwise-go/pkg/bluecoins"
 	"bluecoins-to-splitwise-go/pkg/model"
 	"fmt"
 	"log"
@@ -18,6 +19,7 @@ type MainView struct {
 	blueCoinsTransactions []model.BluecoinsTransaction
 	Logfile               *os.File
 	Verbose               bool
+	BluecoinsService      bluecoins.BluecoinsService
 }
 
 var (
@@ -104,10 +106,10 @@ func (m *MainView) IncludeTransaction(g *gocui.Gui, v *gocui.View) error {
 	m.blueCoinsTransactions = append(m.blueCoinsTransactions, bt)
 
 	descView := &SearchView{
-		Text:          m.CurrentTransaction().Description,
+		Text:          m.CurrentTransaction().CleanDescription(),
 		Name:          "description",
 		UpdateHandler: m.UpdateDescription,
-		SearchFn:      Search,
+		SearchFn:      m.DescriptionSearch,
 		NextHandler:   m.NextTransaction,
 		LogHandler:    m.AddLog,
 	}
@@ -117,6 +119,19 @@ func (m *MainView) IncludeTransaction(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	return nil
+}
+
+func (m *MainView) DescriptionSearch(text string) []string {
+	transactions, err := m.BluecoinsService.GetTransactionsImportFormatByDescription(text)
+	if err != nil {
+		m.AddLog(m.view, fmt.Sprintf("Error getting transactions: %s", err))
+		return []string{}
+	}
+	var matches []string
+	for _, t := range transactions {
+		matches = append(matches, t.ToString())
+	}
+	return matches
 }
 
 func Search(text string) []string {

@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 type TransactionType int
 
@@ -14,4 +17,9 @@ type BankTransaction struct {
 	Description     string
 	TransactionType TransactionType
 	Amount          float64
+}
+
+func (t *BankTransaction) CleanDescription() string {
+	parts := strings.Split(t.Description, "/")
+	return strings.Trim(parts[len(parts)-1], "-")
 }

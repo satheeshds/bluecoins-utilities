@@ -44,3 +44,7 @@ func (b *BluecoinsServiceImpl) GetTransactionsAfter(after time.Time, accountId i
 func (b *BluecoinsServiceImpl) GetAccounts() ([]model.Account, error) {
 	return b.db.GetAccounts()
 }
+
+func (b *BluecoinsServiceImpl) GetTransactionsImportFormatByDescription(desc string) ([]model.BluecoinsTransactionImport, error) {
+	return b.db.GetTransactionsImportFormatByDescription(desc)
+}

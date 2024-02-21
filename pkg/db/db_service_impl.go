@@ -107,3 +107,35 @@ func (m *DBServiceImpl) GetAccounts() ([]model.Account, error) {
 
 	return accounts, nil
 }
+
+func (m *DBServiceImpl) GetTransactionsImportFormatByDescription(desc string) ([]model.BluecoinsTransactionImport, error) {
+	query := `
+		SELECT 
+			DISTINCT it.itemName, cct.childCategoryName, pct.parentCategoryName,
+                    IFNULL((SELECT GROUP_CONCAT(lt.labelname) FROM labelstable lt WHERE lt.transactionidlabels = tt.transactionstableid),'') as labels 
+        FROM itemtable it 
+		INNER JOIN transactionstable tt ON tt.itemID = it.itemTableID
+        INNER JOIN childcategorytable cct ON tt.categoryID = cct.categoryTableID 
+        INNER JOIN parentcategorytable pct ON cct.parentCategoryID = pct.parentCategoryTableID 
+        WHERE it.itemName LIKE ?
+		ORDER BY 1;`
+	rows, err := m.db.Query(query, "%"+desc+"%")
+	if err != nil {
+		return nil, err
+	}
+
+	var transactions []model.BluecoinsTransactionImport
+	var labels string
+	for rows.Next() {
+		var transaction model.BluecoinsTransactionImport
+		err = rows.Scan(&transaction.Name, &transaction.Category, &transaction.ParentCategory, &labels)
+		if err != nil {
+			return nil, err
+		}
+		transaction.Labels = strings.Split(labels, ",")
+
+		transactions = append(transactions, transaction)
+	}
+	return transactions, nil
+
+}

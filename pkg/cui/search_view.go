@@ -31,7 +31,7 @@ func (s *SearchView) Create(g *gocui.Gui, x0, y0, x1, y1 int) error {
 		StartY:            y0 + inputViewHeight + 1,
 		SelectedHandler:   s.Selected,
 		InputFocusHandler: s.FocusInput,
-		Items:             s.SearchFn(""),
+		Items:             s.SearchFn(s.Text),
 		LogHandler:        s.LogHandler,
 	}
 	s.inputView = &InputView{

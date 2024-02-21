@@ -2,6 +2,7 @@ package main
 
 import (
 	"bluecoins-to-splitwise-go/pkg/bank"
+	"bluecoins-to-splitwise-go/pkg/bluecoins"
 	"bluecoins-to-splitwise-go/pkg/cui"
 	"flag"
 	"fmt"
@@ -27,6 +28,10 @@ func main() {
 		log.Fatalf("The file does not exist at the path: %s", filePath)
 	} else if err != nil {
 		log.Fatalf("An error occurred: %v", err)
+	}
+	bluecoinsService, err := bluecoins.NewBluecoinsService()
+	if err != nil {
+		log.Fatalf("Error creating Bluecoins service: %v", err)
 	}
 
 	transactionService, err := bank.NewTransactionService()
@@ -55,10 +60,11 @@ func main() {
 	defer f.Close()
 
 	mainView := &cui.MainView{
-		Name:         "main",
-		Transactions: transactions,
-		Logfile:      f,
-		Verbose:      verbose,
+		Name:             "main",
+		Transactions:     transactions,
+		Logfile:          f,
+		Verbose:          verbose,
+		BluecoinsService: bluecoinsService,
 	}
 	g.SetManagerFunc(mainView.Layout)
 
