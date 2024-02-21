@@ -139,3 +139,14 @@ func (m *MainView) AddLog(view *gocui.View, text string) {
 	}
 	fmt.Fprintf(m.Logfile, "[%s] %s\n", viewName, text)
 }
+
+func DeleteView(g *gocui.Gui, viewName ...string) error {
+	for _, name := range viewName {
+		if err := g.DeleteView(name); err != nil {
+			return err
+		}
+
+		g.DeleteKeybindings(name)
+	}
+	return nil
+}

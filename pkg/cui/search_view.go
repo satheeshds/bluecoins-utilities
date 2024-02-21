@@ -58,10 +58,7 @@ func (s *SearchView) Selected(text string) func(g *gocui.Gui, v *gocui.View) err
 		s.LogHandler(v, "calling update handler")
 		s.UpdateHandler(text)(g, v)
 		s.LogHandler(v, "deleting views")
-		g.DeleteView(s.inputView.Name)
-		g.DeleteKeybindings(s.inputView.Name)
-		g.DeleteView(s.listView.Name)
-		g.DeleteKeybindings(s.listView.Name)
+		DeleteView(g, s.inputView.Name, s.listView.Name)
 		s.LogHandler(v, "calling next handler")
 		return s.NextHandler(g, v)
 	}

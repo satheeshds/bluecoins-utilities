@@ -66,24 +66,31 @@ func (s *SelectableList) Layout(g *gocui.Gui) error {
 }
 
 func (s *SelectableList) Up(g *gocui.Gui, v *gocui.View) error {
+	s.LogHandler(v, fmt.Sprintf("Up -- SelectedIndex: %d", s.SelectedIndex))
 	if v != nil {
-		_, oy := v.Origin()
 		cx, cy := v.Cursor()
-		if err := v.SetCursor(cx, cy-1); err != nil && oy > 0 {
+		if err := v.SetCursor(cx, cy-1); err == nil {
 			s.SelectedIndex--
-			v.MoveCursor(0, -1, false)
+		} else {
+			s.LogHandler(v, fmt.Sprintf("Up else not moving cursor -- err (%v)", err))
 		}
+
+		s.LogHandler(v, fmt.Sprintf("Up -- Updated index: %d", s.SelectedIndex))
 	}
 	return nil
 }
 
 func (s *SelectableList) Down(g *gocui.Gui, v *gocui.View) error {
+	s.LogHandler(v, fmt.Sprintf("Down -- SelectedIndex: %d", s.SelectedIndex))
 	if v != nil {
 		cx, cy := v.Cursor()
-		if err := v.SetCursor(cx, cy+1); err != nil && s.SelectedIndex < len(s.Items)-1 {
+		if err := v.SetCursor(cx, cy+1); err == nil {
 			s.SelectedIndex++
-			v.MoveCursor(0, 1, false)
+		} else {
+			s.LogHandler(v, fmt.Sprintf("Down else not moving cursor -- err (%v)", err))
 		}
+
+		s.LogHandler(v, fmt.Sprintf("Down -- Updated index: %d", s.SelectedIndex))
 	}
 	return nil
 }
@@ -96,6 +103,7 @@ func (s *SelectableList) Select(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (s *SelectableList) GetSelected() string {
+	s.LogHandler(nil, fmt.Sprintf("GetSelected() SelectedIndex: %d", s.SelectedIndex))
 	if s.SelectedIndex < 0 || s.SelectedIndex >= len(s.Items) {
 		return ""
 	}
