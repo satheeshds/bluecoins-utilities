@@ -27,6 +27,10 @@ func (i *InputView) Layout(g *gocui.Gui, x0, y0, x1, y1 int) error {
 		if err := g.SetKeybinding(i.Name, gocui.KeySpace, gocui.ModNone, i.UpdateHandler); err != nil {
 			return err
 		}
+		if err := g.SetKeybinding(i.Name, gocui.KeyTab, gocui.ModNone, i.UpdateHandler); err != nil {
+			return err
+		}
+
 	}
 	i.View = v
 	return nil

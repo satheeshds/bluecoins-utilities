@@ -10,8 +10,8 @@ type SearchView struct {
 	View          *gocui.View
 	Name          string
 	Text          string
-	SearchFn      func(text string) []string
-	UpdateHandler func(desc string) func(g *gocui.Gui, v *gocui.View) error
+	SearchFn      func(text string) []fmt.Stringer
+	UpdateHandler func(desc interface{}) func(g *gocui.Gui, v *gocui.View) error
 	NextHandler   func(g *gocui.Gui, v *gocui.View) error
 	inputView     *InputView
 	listView      *SelectableList
@@ -47,16 +47,22 @@ func (s *SearchView) Create(g *gocui.Gui, x0, y0, x1, y1 int) error {
 	if err := s.listView.Layout(g); err != nil {
 		return err
 	}
-	s.FocusInput(g, nil)
+	s.FocusList(g, nil)
 
 	return nil
 }
 
-func (s *SearchView) Selected(text string) func(g *gocui.Gui, v *gocui.View) error {
-	s.LogHandler(s.View, "selected: "+text)
+func (s *SearchView) Selected(txn interface{}) func(g *gocui.Gui, v *gocui.View) error {
+	transaction, ok := txn.(fmt.Stringer)
+	if !ok {
+		return func(g *gocui.Gui, v *gocui.View) error {
+			return fmt.Errorf("invalid transaction type: %T", txn)
+		}
+	}
+	s.LogHandler(s.View, fmt.Sprintf("selected: %s", transaction))
 	return func(g *gocui.Gui, v *gocui.View) error {
 		s.LogHandler(v, "calling update handler")
-		s.UpdateHandler(text)(g, v)
+		s.UpdateHandler(txn)(g, v)
 		s.LogHandler(v, "deleting views")
 		DeleteView(g, s.inputView.Name, s.listView.Name)
 		s.LogHandler(v, "calling next handler")

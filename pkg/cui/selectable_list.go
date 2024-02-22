@@ -7,11 +7,11 @@ import (
 )
 
 type SelectableList struct {
-	Items             []string
+	Items             []fmt.Stringer
 	SelectedIndex     int
 	Name              string
 	StartX, StartY    int
-	SelectedHandler   func(text string) func(g *gocui.Gui, v *gocui.View) error
+	SelectedHandler   func(val interface{}) func(g *gocui.Gui, v *gocui.View) error
 	InputFocusHandler func(g *gocui.Gui, v *gocui.View) error
 	LogHandler        func(*gocui.View, string)
 }
@@ -23,8 +23,8 @@ func (s *SelectableList) height() int {
 func (s *SelectableList) width() int {
 	width := 0
 	for _, item := range s.Items {
-		if len(item) > width {
-			width = len(item)
+		if len(item.String()) > width {
+			width = len(item.String())
 		}
 	}
 	return width + 1
@@ -73,6 +73,7 @@ func (s *SelectableList) Up(g *gocui.Gui, v *gocui.View) error {
 			s.SelectedIndex--
 		} else {
 			s.LogHandler(v, fmt.Sprintf("Up else not moving cursor -- err (%v)", err))
+			s.InputFocusHandler(g, v)
 		}
 
 		s.LogHandler(v, fmt.Sprintf("Up -- Updated index: %d", s.SelectedIndex))
@@ -88,6 +89,7 @@ func (s *SelectableList) Down(g *gocui.Gui, v *gocui.View) error {
 			s.SelectedIndex++
 		} else {
 			s.LogHandler(v, fmt.Sprintf("Down else not moving cursor -- err (%v)", err))
+			s.InputFocusHandler(g, v)
 		}
 
 		s.LogHandler(v, fmt.Sprintf("Down -- Updated index: %d", s.SelectedIndex))
@@ -102,7 +104,7 @@ func (s *SelectableList) Select(g *gocui.Gui, v *gocui.View) error {
 	return s.SelectedHandler(selectedText)(g, v)
 }
 
-func (s *SelectableList) GetSelected() string {
+func (s *SelectableList) GetSelected() interface{} {
 	s.LogHandler(nil, fmt.Sprintf("GetSelected() SelectedIndex: %d", s.SelectedIndex))
 	if s.SelectedIndex < 0 || s.SelectedIndex >= len(s.Items) {
 		return ""

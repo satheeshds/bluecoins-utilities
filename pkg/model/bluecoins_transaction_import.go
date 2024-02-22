@@ -12,6 +12,6 @@ type BluecoinsTransactionImport struct {
 	Labels         []string
 }
 
-func (t *BluecoinsTransactionImport) ToString() string {
+func (t BluecoinsTransactionImport) String() string {
 	return fmt.Sprintf("%s|%s|%s|%s", t.Name, t.Category, t.ParentCategory, strings.Join(t.Labels, ","))
 }

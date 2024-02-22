@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/jroimartin/gocui"
 )
@@ -16,7 +15,7 @@ type MainView struct {
 	Name                  string
 	curTransaction        int
 	Transactions          []model.BankTransaction
-	blueCoinsTransactions []model.BluecoinsTransaction
+	blueCoinsTransactions []model.BluecoinsTransactionImport
 	Logfile               *os.File
 	Verbose               bool
 	BluecoinsService      bluecoins.BluecoinsService
@@ -49,10 +48,11 @@ func (m *MainView) Layout(g *gocui.Gui) error {
 		if err := g.SetKeybinding(m.Name, 'y', gocui.ModNone, m.IncludeTransaction); err != nil && err != gocui.ErrQuit {
 			log.Panicln(err)
 		}
-		if err := g.SetKeybinding(m.Name, 'n', gocui.ModNone, m.NextTransaction); err != nil && err != gocui.ErrQuit {
+		if err := g.SetKeybinding(m.Name, 'n', gocui.ModNone, m.Next); err != nil && err != gocui.ErrQuit {
 			log.Panicln(err)
 		}
-		if err := g.SetKeybinding(m.Name, gocui.KeyCtrlC, gocui.ModNone, Quit); err != nil && err != gocui.ErrQuit {
+		// this applies to all views
+		if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, Quit); err != nil && err != gocui.ErrQuit {
 			log.Panicln(err)
 		}
 		m.view = v
@@ -64,7 +64,7 @@ func (m *MainView) Layout(g *gocui.Gui) error {
 	return nil
 }
 
-func (m *MainView) NextTransaction(g *gocui.Gui, v *gocui.View) error {
+func (m *MainView) Next(g *gocui.Gui, v *gocui.View) error {
 	if _, err := g.SetCurrentView(m.Name); err != nil {
 		return err
 	}
@@ -87,30 +87,31 @@ func (m *MainView) CurrentTransaction() *model.BankTransaction {
 
 func (m *MainView) GetSelectedTransactions() ([][]string, error) {
 	for _, transaction := range m.blueCoinsTransactions {
-		fmt.Println(transaction.Description)
+		fmt.Println(transaction.String())
 	}
 	return nil, nil
 }
 
-func (m *MainView) UpdateDescription(desc string) func(g *gocui.Gui, v *gocui.View) error {
+func (m *MainView) UpdateDescription(transaction interface{}) func(g *gocui.Gui, v *gocui.View) error {
 	return func(g *gocui.Gui, v *gocui.View) error {
-		m.blueCoinsTransactions[len(m.blueCoinsTransactions)-1].Description = desc
+		//
+		txn, ok := transaction.(model.BluecoinsTransactionImport)
+		if !ok {
+			return fmt.Errorf("invalid transaction type: %T", transaction)
+		}
+		m.blueCoinsTransactions = append(m.blueCoinsTransactions, txn)
 		return nil
 	}
 }
 
 func (m *MainView) IncludeTransaction(g *gocui.Gui, v *gocui.View) error {
-	bt := model.BluecoinsTransaction{
-		Description: m.Transactions[m.curTransaction].Description,
-	}
-	m.blueCoinsTransactions = append(m.blueCoinsTransactions, bt)
 
 	descView := &SearchView{
 		Text:          m.CurrentTransaction().CleanDescription(),
 		Name:          "description",
 		UpdateHandler: m.UpdateDescription,
 		SearchFn:      m.DescriptionSearch,
-		NextHandler:   m.NextTransaction,
+		NextHandler:   m.Next,
 		LogHandler:    m.AddLog,
 	}
 
@@ -121,27 +122,13 @@ func (m *MainView) IncludeTransaction(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func (m *MainView) DescriptionSearch(text string) []string {
+func (m *MainView) DescriptionSearch(text string) []fmt.Stringer {
 	transactions, err := m.BluecoinsService.GetTransactionsImportFormatByDescription(text)
 	if err != nil {
 		m.AddLog(m.view, fmt.Sprintf("Error getting transactions: %s", err))
-		return []string{}
+		return []fmt.Stringer{}
 	}
-	var matches []string
-	for _, t := range transactions {
-		matches = append(matches, t.ToString())
-	}
-	return matches
-}
-
-func Search(text string) []string {
-	var matches []string
-	for _, items := range sampleItems {
-		if strings.Contains(strings.ToLower(items), strings.ToLower(text)) {
-			matches = append(matches, items)
-		}
-	}
-	return matches
+	return transactions
 }
 
 func (m *MainView) AddLog(view *gocui.View, text string) {
