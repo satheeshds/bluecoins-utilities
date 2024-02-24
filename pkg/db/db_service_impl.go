@@ -128,7 +128,7 @@ func (m *DBServiceImpl) GetTransactionsImportFormatByDescription(desc string) ([
 	var labels string
 	for rows.Next() {
 		var transaction model.BluecoinsTransactionImport
-		err = rows.Scan(&transaction.Name, &transaction.Category, &transaction.ParentCategory, &labels)
+		err = rows.Scan(&transaction.ItemOrPayee, &transaction.Category, &transaction.ParentCategory, &labels)
 		if err != nil {
 			return nil, err
 		}

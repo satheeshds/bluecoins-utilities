@@ -75,35 +75,10 @@ func main() {
 		log.Panicln(err)
 	}
 
-	mainView.GetSelectedTransactions()
+	g.Close()
+	importTxns := mainView.GetSelectedTransactions()
+	transactionService.WriteTransactionRecords(importTxns, "output.csv")
 
 	fmt.Println("Press Enter to exit...")
 	fmt.Scanln()
-	// var descriptions []string
-	// for _, transaction := range transactions {
-	// 	descriptions = append(descriptions, transaction.Description)
-	// }
-	// list := cui.NewSelectableList("list", descriptions, 0, 0)
-
-	// g.SetManagerFunc(list.Layout)
-
-	// if err := g.SetKeybinding("list", gocui.KeyArrowDown, gocui.ModNone, list.Down); err != nil {
-	// 	log.Fatalf("Error setting keybinding: %v", err)
-	// }
-
-	// if err := g.SetKeybinding("list", gocui.KeyArrowUp, gocui.ModNone, list.Up); err != nil {
-	// 	log.Fatalf("Error setting keybinding: %v", err)
-	// }
-
-	// if err := g.SetKeybinding("list", gocui.KeyEnter, gocui.ModNone, list.Enter); err != nil {
-	// 	log.Fatalf("Error setting keybinding: %v", err)
-	// }
-
-	// log.Println("in main loop...")
-	// if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
-	// 	log.Fatalf("Error in main loop: %v", err)
-	// }
-
-	// log.Printf("Selected item: %s", list.GetSelected())
-	// log.Println("Exiting...")
 }

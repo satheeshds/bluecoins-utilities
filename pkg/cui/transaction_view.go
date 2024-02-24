@@ -27,7 +27,7 @@ func (t *TransactionView) Layout(g *gocui.Gui, x0, y0, x1, y1 int) error {
 	t.endY = y1
 	t.nameView = &InputView{
 		Name:           t.Name + "Name",
-		Text:           t.Data.Name,
+		Text:           t.Data.ItemOrPayee,
 		UpdateHandler:  t.UpdateName,
 		LogHandler:     t.LogHandler,
 		DiscardHandler: t.Discard,
@@ -86,7 +86,7 @@ func (t *TransactionView) Layout(g *gocui.Gui, x0, y0, x1, y1 int) error {
 // }
 
 func (t *TransactionView) UpdateName(g *gocui.Gui, v *gocui.View) error {
-	t.Data.Name = v.Buffer()
+	t.Data.ItemOrPayee, _ = v.Line(0)
 	if err := DeleteView(g, t.nameView.Name); err != nil {
 		return err
 	}

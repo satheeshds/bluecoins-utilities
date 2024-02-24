@@ -77,11 +77,8 @@ func (m *MainView) CurrentTransaction() *model.BankTransaction {
 	return &m.Transactions[m.curTransaction]
 }
 
-func (m *MainView) GetSelectedTransactions() ([][]string, error) {
-	for _, transaction := range m.blueCoinsTransactions {
-		fmt.Println(transaction)
-	}
-	return nil, nil
+func (m *MainView) GetSelectedTransactions() []model.BluecoinsTransactionImport {
+	return m.blueCoinsTransactions
 }
 
 func (m *MainView) UpdateTransaction(transaction interface{}) func(g *gocui.Gui, v *gocui.View) error {
@@ -178,6 +175,17 @@ func DeleteView(g *gocui.Gui, viewName ...string) error {
 }
 
 func (m *MainView) AddTransaction(selected model.BluecoinsTransactionImport) func(g *gocui.Gui, v *gocui.View) error {
+	current := m.CurrentTransaction()
+	if current.TransactionType == model.Credit {
+		selected.Type = "i"
+	} else {
+		selected.Type = "e"
+	}
+
+	selected.Date = current.Date.Format("01/02/2006")
+	selected.AccountType = "Bank"
+	selected.Account = "SBI Technopark"
+	selected.Amount = fmt.Sprintf("%f", current.Amount)
 	return func(g *gocui.Gui, v *gocui.View) error {
 		m.blueCoinsTransactions = append(m.blueCoinsTransactions, selected)
 		return m.Next(g, v)

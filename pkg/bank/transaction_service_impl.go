@@ -80,3 +80,7 @@ func (t *TransactionServiceImpl) GetBankTransactions(filename string) ([]model.B
 	}
 	return transactions, nil
 }
+
+func (t *TransactionServiceImpl) WriteTransactionRecords(records []model.BluecoinsTransactionImport, filename string) error {
+	return t.fileService.WriteTransactionRecords(records, filename)
+}
