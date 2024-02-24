@@ -89,7 +89,6 @@ func (s *SelectableList) Down(g *gocui.Gui, v *gocui.View) error {
 			s.SelectedIndex++
 		} else {
 			s.LogHandler(v, fmt.Sprintf("Down else not moving cursor -- err (%v)", err))
-			s.InputFocusHandler(g, v)
 		}
 
 		s.LogHandler(v, fmt.Sprintf("Down -- Updated index: %d", s.SelectedIndex))

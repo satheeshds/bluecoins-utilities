@@ -48,3 +48,7 @@ func (b *BluecoinsServiceImpl) GetAccounts() ([]model.Account, error) {
 func (b *BluecoinsServiceImpl) GetTransactionsImportFormatByDescription(desc string) ([]model.BluecoinsTransactionImport, error) {
 	return b.db.GetTransactionsImportFormatByDescription(desc)
 }
+
+func (b *BluecoinsServiceImpl) GetCategories(text string) ([]model.Category, error) {
+	return b.db.GetCategories(text)
+}

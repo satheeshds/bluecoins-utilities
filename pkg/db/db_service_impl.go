@@ -137,5 +137,35 @@ func (m *DBServiceImpl) GetTransactionsImportFormatByDescription(desc string) ([
 		transactions = append(transactions, transaction)
 	}
 	return transactions, nil
+}
 
+func (m *DBServiceImpl) GetCategories(text string) ([]model.Category, error) {
+	query := `
+		SELECT 
+			distinct cct.childCategoryName, pct.parentCategoryName
+		FROM 
+			childcategorytable cct 
+		INNER JOIN 
+			parentcategorytable pct 
+		ON 
+			cct.parentCategoryID = pct.parentCategoryTableID 
+		WHERE 
+			cct.childCategoryName LIKE ?
+		ORDER BY 1;`
+	rows, err := m.db.Query(query, "%"+text+"%")
+	if err != nil {
+		return nil, err
+	}
+
+	var categories []model.Category
+	for rows.Next() {
+		var category model.Category
+		err = rows.Scan(&category.Name, &category.ParentCategory)
+		if err != nil {
+			return nil, err
+		}
+
+		categories = append(categories, category)
+	}
+	return categories, nil
 }
