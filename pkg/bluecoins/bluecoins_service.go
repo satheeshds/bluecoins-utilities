@@ -9,6 +9,7 @@ type BluecoinsService interface {
 	// GetTransactions returns all transactions from Bluecoins
 	GetTransactionsAfter(after time.Time, accountId int) ([]model.BluecoinsTransaction, error)
 	GetAccounts() ([]model.Account, error)
+	GetAccountsBySearch(prefix string) ([]model.Account, error)
 	GetTransactionsImportFormatByDescription(desc string) ([]model.BluecoinsTransactionImport, error)
 	GetCategories(text string) ([]model.Category, error)
 }

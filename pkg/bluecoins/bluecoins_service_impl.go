@@ -45,6 +45,11 @@ func (b *BluecoinsServiceImpl) GetAccounts() ([]model.Account, error) {
 	return b.db.GetAccounts()
 }
 
+func (b *BluecoinsServiceImpl) GetAccountsBySearch(prefix string) ([]model.Account, error) {
+	return b.db.GetAccountsBySearch(prefix)
+
+}
+
 func (b *BluecoinsServiceImpl) GetTransactionsImportFormatByDescription(desc string) ([]model.BluecoinsTransactionImport, error) {
 	return b.db.GetTransactionsImportFormatByDescription(desc)
 }

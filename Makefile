@@ -18,6 +18,7 @@ build:
 
 build-windows:
 	cd $(SRC_PATH) && GOOS=windows GOARCH=amd64 $(GOBUILD) -o ../../$(BINARY_NAME).exe -v
+	cd $(CONVERT_PATH) && GOOS=windows GOARCH=amd64 $(GOBUILD) -o ../../$(CONVERT_BINARY_NAME).exe -v
 
 test: 
 	$(GOTEST) -v ./...

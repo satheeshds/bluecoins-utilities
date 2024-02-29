@@ -81,6 +81,37 @@ func (m *DBServiceImpl) GetTransactions(after time.Time, accountId int) ([]model
 	return transactions, nil
 }
 
+func (m *DBServiceImpl) GetAccountsBySearch(prefix string) ([]model.Account, error) {
+	query := `select 
+				at.accountName, att.accountTypeName
+            from accountstable at 
+			inner join accounttypetable att on at.accounttypeid = att.accounttypetableid
+            where at.accountName like ?;`
+
+	rows, err := m.db.Query(query, "%"+prefix+"%")
+	if err != nil {
+		return nil, err
+	}
+
+	var accounts []model.Account
+	for rows.Next() {
+		var account model.Account
+		err = rows.Scan(&account.Name, &account.TypeName)
+		if err != nil {
+			return nil, err
+		}
+
+		accounts = append(accounts, account)
+
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return accounts, nil
+}
+
 func (m *DBServiceImpl) GetAccounts() ([]model.Account, error) {
 	// Implement your logic here
 	// For now, we'll just return an empty slice and nil error

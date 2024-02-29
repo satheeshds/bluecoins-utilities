@@ -11,12 +11,14 @@ type TransactionView struct {
 	Data                       model.BluecoinsTransactionImport
 	Name                       string
 	LogHandler                 func(*gocui.View, string)
-	Selected                   func(model.BluecoinsTransactionImport) func(g *gocui.Gui, v *gocui.View) error
+	Selected                   func(...model.BluecoinsTransactionImport) func(g *gocui.Gui, v *gocui.View) error
 	nameView                   *InputView
 	categoryView               *SearchView
 	termLabel                  *SelectableList
 	splitLabel                 *SelectableList
+	transferView               *TransferView
 	CategorySearchFn           func(text string) []fmt.Stringer
+	AccountSearchfn            func(text string) []fmt.Stringer
 	startX, startY, endX, endY int
 }
 
@@ -54,7 +56,6 @@ func (t *TransactionView) Layout(g *gocui.Gui, x0, y0, x1, y1 int) error {
 		StartX:            x0,
 		StartY:            y0,
 	}
-	//const std::vector<Label> spliwiseLabels = {{"NotSplit"}, {"SplitEqual"}, {"SplitUnequal"}};
 	splitLabels := []string{"NotSplit", "SplitEqual", "SplitUnequal"}
 	splitItems := make([]fmt.Stringer, len(splitLabels))
 	for i, split := range splitLabels {
@@ -68,6 +69,14 @@ func (t *TransactionView) Layout(g *gocui.Gui, x0, y0, x1, y1 int) error {
 		InputFocusHandler: t.Discard,
 		StartX:            x0,
 		StartY:            y0,
+	}
+
+	t.transferView = &TransferView{
+		Name:            t.Name + "Transfer",
+		LogHandler:      t.LogHandler,
+		AccountSearchfn: t.AccountSearchfn, //TODO: change this to AccountSearchFn
+		Transaction:     t.Data,
+		Selected:        t.UpdateTransfer,
 	}
 	if err := t.nameView.Layout(g, x0, y0, x1); err != nil {
 		return err
@@ -90,10 +99,27 @@ func (t *TransactionView) UpdateName(g *gocui.Gui, v *gocui.View) error {
 	if err := DeleteView(g, t.nameView.Name); err != nil {
 		return err
 	}
-	if err := t.categoryView.Create(g, t.startX, t.startY, t.endX, t.endY); err != nil {
+	if err := t.transferView.Layout(g, t.startX, t.startY, t.endX, t.endY); err != nil {
 		return err
 	}
-	return t.FocusView(g, t.categoryView.inputView.Name)
+	return t.FocusView(g, t.transferView.showView.Name)
+}
+
+func (t *TransactionView) UpdateTransfer(counter *model.BluecoinsTransactionImport) func(g *gocui.Gui, v *gocui.View) error {
+	return func(g *gocui.Gui, v *gocui.View) error {
+		if counter == nil {
+			if err := t.categoryView.Create(g, t.startX, t.startY, t.endX, t.endY); err != nil {
+				return err
+			}
+			return t.FocusView(g, t.categoryView.inputView.Name)
+		} else {
+			t.Data.Type = "t"
+			t.Data.Category = "(Transfer)"
+			t.Data.ParentCategory = "(Transfer)"
+			return t.Selected(t.Data, *counter)(g, v)
+		}
+
+	}
 }
 
 func (t *TransactionView) UpdateCategory(category interface{}) func(g *gocui.Gui, v *gocui.View) error {

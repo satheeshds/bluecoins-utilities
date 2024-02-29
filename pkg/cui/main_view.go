@@ -51,8 +51,12 @@ func (m *MainView) Layout(g *gocui.Gui) error {
 
 	}
 	v.Clear()
-	fmt.Fprintln(v, m.CurrentTransaction().Description)
-	fmt.Fprintf(v, "(%d) Add to Bluecoins: (y/n)", m.curTransaction)
+	curr := m.CurrentTransaction()
+	fmt.Fprintf(v, "%-20s:(%d/%d)\n", "Transaction", m.curTransaction+1, len(m.Transactions))
+	fmt.Fprintf(v, "%-20s:%s\n", "Description", curr.Description)
+	fmt.Fprintf(v, "%-20s:%v\n", "Date", curr.Date)
+	fmt.Fprintf(v, "%-20s:%f\n", "Amount", curr.Amount)
+	fmt.Fprintf(v, "%-20s: (y/n)", "Add to Bluecoins")
 	return nil
 }
 
@@ -111,13 +115,27 @@ func (m *MainView) IncludeTransaction(g *gocui.Gui, v *gocui.View) error {
 
 func (m *MainView) PopulateTransaction(g *gocui.Gui, v *gocui.View) error {
 	m.AddLog(v, "PopulateTransaction")
-	txnImport := &model.BluecoinsTransactionImport{}
+	current := m.CurrentTransaction()
+
+	txnImport := &model.BluecoinsTransactionImport{
+		Date:        current.Date.Format("01/02/2006"),
+		AccountType: "Bank",
+		Account:     "SBI Technopark",
+		Amount:      fmt.Sprintf("%f", current.Amount),
+	}
+	if current.TransactionType == model.Credit {
+		txnImport.Type = "i"
+	} else {
+		txnImport.Type = "e"
+	}
+
 	transView := &TransactionView{
 		Data:             *txnImport,
 		Name:             "transaction",
 		LogHandler:       m.AddLog,
 		Selected:         m.AddTransaction,
 		CategorySearchFn: m.CategorySearch,
+		AccountSearchfn:  m.AccountSearch,
 	}
 
 	if err := transView.Layout(g, 5, 5, 50, 50); err != nil {
@@ -152,6 +170,19 @@ func (m *MainView) CategorySearch(text string) []fmt.Stringer {
 	return stringer
 }
 
+func (m *MainView) AccountSearch(text string) []fmt.Stringer {
+	var stringer []fmt.Stringer
+	accounts, err := m.BluecoinsService.GetAccountsBySearch(text)
+	if err != nil {
+		m.AddLog(m.view, fmt.Sprintf("Error getting accounts: %s", err))
+		return stringer
+	}
+	for _, acc := range accounts {
+		stringer = append(stringer, acc)
+	}
+	return stringer
+}
+
 func (m *MainView) AddLog(view *gocui.View, text string) {
 	if !m.Verbose {
 		return
@@ -174,20 +205,9 @@ func DeleteView(g *gocui.Gui, viewName ...string) error {
 	return nil
 }
 
-func (m *MainView) AddTransaction(selected model.BluecoinsTransactionImport) func(g *gocui.Gui, v *gocui.View) error {
-	current := m.CurrentTransaction()
-	if current.TransactionType == model.Credit {
-		selected.Type = "i"
-	} else {
-		selected.Type = "e"
-	}
-
-	selected.Date = current.Date.Format("01/02/2006")
-	selected.AccountType = "Bank"
-	selected.Account = "SBI Technopark"
-	selected.Amount = fmt.Sprintf("%f", current.Amount)
+func (m *MainView) AddTransaction(selected ...model.BluecoinsTransactionImport) func(g *gocui.Gui, v *gocui.View) error {
 	return func(g *gocui.Gui, v *gocui.View) error {
-		m.blueCoinsTransactions = append(m.blueCoinsTransactions, selected)
+		m.blueCoinsTransactions = append(m.blueCoinsTransactions, selected...)
 		return m.Next(g, v)
 	}
 }
