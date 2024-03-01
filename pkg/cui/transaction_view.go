@@ -8,7 +8,7 @@ import (
 )
 
 type TransactionView struct {
-	Data                       model.BluecoinsTransactionImport
+	Data                       *model.BluecoinsTransactionImport
 	Name                       string
 	LogHandler                 func(*gocui.View, string)
 	Selected                   func(...model.BluecoinsTransactionImport) func(g *gocui.Gui, v *gocui.View) error
@@ -75,7 +75,7 @@ func (t *TransactionView) Layout(g *gocui.Gui, x0, y0, x1, y1 int) error {
 		Name:            t.Name + "Transfer",
 		LogHandler:      t.LogHandler,
 		AccountSearchfn: t.AccountSearchfn, //TODO: change this to AccountSearchFn
-		Transaction:     t.Data,
+		Transaction:     *t.Data,
 		Selected:        t.UpdateTransfer,
 	}
 	if err := t.nameView.Layout(g, x0, y0, x1); err != nil {
@@ -113,10 +113,17 @@ func (t *TransactionView) UpdateTransfer(counter *model.BluecoinsTransactionImpo
 			}
 			return t.FocusView(g, t.categoryView.inputView.Name)
 		} else {
-			t.Data.Type = "t"
 			t.Data.Category = "(Transfer)"
 			t.Data.ParentCategory = "(Transfer)"
-			return t.Selected(t.Data, *counter)(g, v)
+			txntype := t.Data.Type
+			t.Data.Type = "t"
+			if txntype == "e" {
+				t.Data.Amount = "-" + t.Data.Amount
+				return t.Selected(*t.Data, *counter)(g, v)
+			} else {
+				counter.Amount = "-" + counter.Amount
+				return t.Selected(*counter, *t.Data)(g, v)
+			}
 		}
 
 	}
@@ -166,7 +173,7 @@ func (t *TransactionView) UpdateLabel(lbl interface{}) func(g *gocui.Gui, v *goc
 			if err := DeleteView(g, t.splitLabel.Name); err != nil {
 				return err
 			}
-			return t.Selected(t.Data)(g, v)
+			return t.Selected(*t.Data)(g, v)
 		}
 		return nil
 	}

@@ -91,6 +91,7 @@ func (m *MainView) UpdateTransaction(transaction interface{}) func(g *gocui.Gui,
 		if !ok {
 			return fmt.Errorf("invalid transaction type: %T", transaction)
 		}
+		m.PopulateTransactionFields(&txn)
 		return m.AddTransaction(txn)(g, v)
 	}
 }
@@ -106,31 +107,34 @@ func (m *MainView) IncludeTransaction(g *gocui.Gui, v *gocui.View) error {
 		DiscardHandler: m.PopulateTransaction,
 	}
 
-	if err := descView.Create(g, 5, 5, 50, 50); err != nil {
+	if err := descView.Create(g, 5, 10, 50, 50); err != nil {
 		return err
 	}
 
 	return nil
 }
 
+func (m *MainView) PopulateTransactionFields(txn *model.BluecoinsTransactionImport) error {
+	current := m.CurrentTransaction()
+	txn.AccountType = "Bank"
+	txn.Account = "SBI Technopark"
+	txn.Date = current.Date.Format("01/02/2006")
+	txn.Amount = fmt.Sprintf("%f", current.Amount)
+	if current.TransactionType == model.Credit {
+		txn.Type = "i"
+	} else {
+		txn.Type = "e"
+	}
+	return nil
+}
+
 func (m *MainView) PopulateTransaction(g *gocui.Gui, v *gocui.View) error {
 	m.AddLog(v, "PopulateTransaction")
-	current := m.CurrentTransaction()
-
-	txnImport := &model.BluecoinsTransactionImport{
-		Date:        current.Date.Format("01/02/2006"),
-		AccountType: "Bank",
-		Account:     "SBI Technopark",
-		Amount:      fmt.Sprintf("%f", current.Amount),
-	}
-	if current.TransactionType == model.Credit {
-		txnImport.Type = "i"
-	} else {
-		txnImport.Type = "e"
-	}
+	txnImport := &model.BluecoinsTransactionImport{}
+	m.PopulateTransactionFields(txnImport)
 
 	transView := &TransactionView{
-		Data:             *txnImport,
+		Data:             txnImport,
 		Name:             "transaction",
 		LogHandler:       m.AddLog,
 		Selected:         m.AddTransaction,
@@ -138,7 +142,7 @@ func (m *MainView) PopulateTransaction(g *gocui.Gui, v *gocui.View) error {
 		AccountSearchfn:  m.AccountSearch,
 	}
 
-	if err := transView.Layout(g, 5, 5, 50, 50); err != nil {
+	if err := transView.Layout(g, 5, 10, 50, 50); err != nil {
 		return err
 	}
 	return nil

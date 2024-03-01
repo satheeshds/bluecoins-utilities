@@ -8,18 +8,23 @@ import (
 )
 
 type TransferView struct {
-	Name               string
-	Transaction        model.BluecoinsTransactionImport
-	LogHandler         func(*gocui.View, string)
-	Selected           func(*model.BluecoinsTransactionImport) func(g *gocui.Gui, v *gocui.View) error
-	showView           *BoolView
-	accountView        *SearchView
-	counterTransaction *model.BluecoinsTransactionImport
-	AccountSearchfn    func(text string) []fmt.Stringer
+	Name                       string
+	Transaction                model.BluecoinsTransactionImport
+	LogHandler                 func(*gocui.View, string)
+	Selected                   func(*model.BluecoinsTransactionImport) func(g *gocui.Gui, v *gocui.View) error
+	showView                   *BoolView
+	accountView                *SearchView
+	counterTransaction         *model.BluecoinsTransactionImport
+	AccountSearchfn            func(text string) []fmt.Stringer
+	startX, startY, endX, endY int
 }
 
 func (t *TransferView) Layout(g *gocui.Gui, x0, y0, x1, y1 int) error {
 	transferText := "Transfer"
+	t.startX = x0
+	t.startY = y0
+	t.endX = x1
+	t.endY = y1
 	if t.Transaction.Type == "e" {
 		transferText += " to"
 	} else {
@@ -41,7 +46,7 @@ func (t *TransferView) Layout(g *gocui.Gui, x0, y0, x1, y1 int) error {
 		Text:       "Transfer",
 		Selected:   t.Show,
 	}
-	if err := t.showView.Layout(g, x0, y0, x1, y1); err != nil {
+	if err := t.showView.Layout(g, x0, y0, x1, y0+2); err != nil {
 		return err
 	}
 
@@ -58,7 +63,7 @@ func (t *TransferView) Show(show bool) func(g *gocui.Gui, v *gocui.View) error {
 		DeleteView(g, t.showView.Name)
 		t.LogHandler(v, fmt.Sprintf("showing transfer view: %v", show))
 		if show {
-			if err := t.accountView.Create(g, 5, 5, 50, 50); err != nil {
+			if err := t.accountView.Create(g, t.startX, t.startY, t.endX, t.endY); err != nil {
 				return err
 			}
 			t.LogHandler(v, "setting current view to account view")
