@@ -28,6 +28,7 @@ func Quit(g *gocui.Gui, v *gocui.View) error {
 func (m *MainView) Layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	v, err := g.SetView(m.Name, 0, 0, maxX-1, maxY-1)
+	m.AddLog(v, "Layout")
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -56,6 +57,7 @@ func (m *MainView) Layout(g *gocui.Gui) error {
 	fmt.Fprintf(v, "%-20s:%s\n", "Description", curr.Description)
 	fmt.Fprintf(v, "%-20s:%v\n", "Date", curr.Date)
 	fmt.Fprintf(v, "%-20s:%f\n", "Amount", curr.Amount)
+	fmt.Fprintf(v, "%-20s:%s\n", "Type", curr.TransactionType.String())
 	fmt.Fprintf(v, "%-20s: (y/n)", "Add to Bluecoins")
 	return nil
 }
@@ -92,12 +94,36 @@ func (m *MainView) UpdateTransaction(transaction interface{}) func(g *gocui.Gui,
 			return fmt.Errorf("invalid transaction type: %T", transaction)
 		}
 		m.PopulateTransactionFields(&txn)
-		return m.AddTransaction(txn)(g, v)
+		if txn.IsTransfer() {
+			transferAccountView := &SearchView{
+				Text:     "",
+				Name:     "transferAccount",
+				SearchFn: m.AccountSearch,
+				UpdateHandler: func(account interface{}) func(g *gocui.Gui, v *gocui.View) error {
+					return func(g *gocui.Gui, v *gocui.View) error {
+						acc, ok := account.(model.Account)
+						if !ok {
+							return fmt.Errorf("invalid account type: %T", acc)
+						}
+
+						txns := txn.GetTransferTransactions(acc)
+						return m.AddTransaction(txns...)(g, v)
+					}
+
+				},
+				LogHandler: m.AddLog,
+				DiscardHandler: func(g *gocui.Gui, v *gocui.View) error {
+					return nil
+				},
+			}
+			return transferAccountView.Create(g, 5, 10, 50, 50)
+		} else {
+			return m.AddTransaction(txn)(g, v)
+		}
 	}
 }
 
 func (m *MainView) IncludeTransaction(g *gocui.Gui, v *gocui.View) error {
-
 	descView := &SearchView{
 		Text:           m.CurrentTransaction().CleanDescription(),
 		Name:           "description",
@@ -107,11 +133,7 @@ func (m *MainView) IncludeTransaction(g *gocui.Gui, v *gocui.View) error {
 		DiscardHandler: m.PopulateTransaction,
 	}
 
-	if err := descView.Create(g, 5, 10, 50, 50); err != nil {
-		return err
-	}
-
-	return nil
+	return descView.Create(g, 5, 10, 50, 50)
 }
 
 func (m *MainView) PopulateTransactionFields(txn *model.BluecoinsTransactionImport) error {
@@ -142,10 +164,7 @@ func (m *MainView) PopulateTransaction(g *gocui.Gui, v *gocui.View) error {
 		AccountSearchfn:  m.AccountSearch,
 	}
 
-	if err := transView.Layout(g, 5, 10, 50, 50); err != nil {
-		return err
-	}
-	return nil
+	return transView.Layout(g, 5, 10, 50, 50)
 }
 
 func (m *MainView) DescriptionSearch(text string) []fmt.Stringer {

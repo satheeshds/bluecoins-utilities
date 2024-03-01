@@ -11,6 +11,7 @@ type BoolView struct {
 
 func (b *BoolView) Layout(g *gocui.Gui, x0, y0, x1, y1 int) error {
 	v, err := g.SetView(b.Name, x0, y0, x1, y1)
+	b.LogHandler(v, "Layout")
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err

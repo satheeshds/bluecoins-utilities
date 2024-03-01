@@ -40,3 +40,26 @@ func (t BluecoinsTransactionImport) ToSlice() []string {
 		t.Split,
 	}
 }
+
+func (t BluecoinsTransactionImport) IsTransfer() bool {
+	return t.Category == "(Transfer)"
+}
+
+func (b *BluecoinsTransactionImport) GetTransferTransactions(account Account) []BluecoinsTransactionImport {
+	results := []BluecoinsTransactionImport{}
+	txntype := b.Type
+	b.Type = "t"
+	b.Category = "(Transfer)"
+	b.ParentCategory = "(Transfer)"
+	transfer := *b
+	transfer.Account = account.Name
+	transfer.AccountType = account.TypeName
+	if txntype == "e" {
+		b.Amount = "-" + b.Amount
+		results = append(results, *b, transfer)
+	} else {
+		transfer.Amount = "-" + transfer.Amount
+		results = append(results, transfer, *b)
+	}
+	return results
+}

@@ -16,7 +16,8 @@ type TransactionView struct {
 	categoryView               *SearchView
 	termLabel                  *SelectableList
 	splitLabel                 *SelectableList
-	transferView               *TransferView
+	isTransferView             *BoolView
+	transferAccountView        *SearchView
 	CategorySearchFn           func(text string) []fmt.Stringer
 	AccountSearchfn            func(text string) []fmt.Stringer
 	startX, startY, endX, endY int
@@ -70,14 +71,21 @@ func (t *TransactionView) Layout(g *gocui.Gui, x0, y0, x1, y1 int) error {
 		StartX:            x0,
 		StartY:            y0,
 	}
-
-	t.transferView = &TransferView{
-		Name:            t.Name + "Transfer",
-		LogHandler:      t.LogHandler,
-		AccountSearchfn: t.AccountSearchfn, //TODO: change this to AccountSearchFn
-		Transaction:     *t.Data,
-		Selected:        t.UpdateTransfer,
+	t.isTransferView = &BoolView{
+		Name:       t.Name + "Show",
+		LogHandler: t.LogHandler,
+		Text:       "Transfer",
+		Selected:   t.Show,
 	}
+	t.transferAccountView = &SearchView{
+		Name:           t.Name + "TransferAccount",
+		Text:           "",
+		SearchFn:       t.AccountSearchfn,
+		UpdateHandler:  t.UpdateTransferAccount,
+		LogHandler:     t.LogHandler,
+		DiscardHandler: t.Discard,
+	}
+
 	if err := t.nameView.Layout(g, x0, y0, x1); err != nil {
 		return err
 	}
@@ -87,45 +95,46 @@ func (t *TransactionView) Layout(g *gocui.Gui, x0, y0, x1, y1 int) error {
 	return nil
 }
 
-// func (t *TransactionView) ValidateAndSubmit(g *gocui.Gui, v *gocui.View) error {
-// 	if t.Data.Name != "" {
-// 		return t.Selected(t.Data)(g, v)
-// 	}
-// 	return nil
-// }
-
 func (t *TransactionView) UpdateName(g *gocui.Gui, v *gocui.View) error {
 	t.Data.ItemOrPayee, _ = v.Line(0)
 	if err := DeleteView(g, t.nameView.Name); err != nil {
 		return err
 	}
-	if err := t.transferView.Layout(g, t.startX, t.startY, t.endX, t.endY); err != nil {
+
+	if err := t.isTransferView.Layout(g, t.startX, t.startY, t.endX, t.startY+2); err != nil {
 		return err
 	}
-	return t.FocusView(g, t.transferView.showView.Name)
+	return t.FocusView(g, t.isTransferView.Name)
 }
 
-func (t *TransactionView) UpdateTransfer(counter *model.BluecoinsTransactionImport) func(g *gocui.Gui, v *gocui.View) error {
+func (t *TransactionView) Show(show bool) func(g *gocui.Gui, v *gocui.View) error {
 	return func(g *gocui.Gui, v *gocui.View) error {
-		if counter == nil {
-			if err := t.categoryView.Create(g, t.startX, t.startY, t.endX, t.endY); err != nil {
-				return err
-			}
-			return t.FocusView(g, t.categoryView.inputView.Name)
-		} else {
-			t.Data.Category = "(Transfer)"
-			t.Data.ParentCategory = "(Transfer)"
-			txntype := t.Data.Type
-			t.Data.Type = "t"
-			if txntype == "e" {
-				t.Data.Amount = "-" + t.Data.Amount
-				return t.Selected(*t.Data, *counter)(g, v)
+		t.LogHandler(v, "deleting views")
+		DeleteView(g, t.isTransferView.Name)
+		t.LogHandler(v, fmt.Sprintf("showing transfer view: %v", show))
+		if show {
+			transferTxt := "Transfer"
+			if t.Data.Type == "e" {
+				transferTxt += " to"
 			} else {
-				counter.Amount = "-" + counter.Amount
-				return t.Selected(*counter, *t.Data)(g, v)
+				transferTxt += " from"
 			}
+			t.transferAccountView.Name = transferTxt
+			return t.transferAccountView.Create(g, t.startX, t.startY, t.endX, t.endY)
+		} else {
+			return t.categoryView.Create(g, t.startX, t.startY, t.endX, t.endY)
 		}
+	}
+}
 
+func (t *TransactionView) UpdateTransferAccount(account interface{}) func(g *gocui.Gui, v *gocui.View) error {
+	return func(g *gocui.Gui, v *gocui.View) error {
+		acc, ok := account.(model.Account)
+		if !ok {
+			return fmt.Errorf("invalid account type: %T", acc)
+		}
+		txns := t.Data.GetTransferTransactions(acc)
+		return t.Selected(txns...)(g, v)
 	}
 }
 
