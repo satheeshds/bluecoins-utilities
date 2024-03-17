@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -26,8 +27,7 @@ func getClient(config *oauth2.Config) *http.Client {
 	// time.
 	tokFile := "token.json"
 	tok, err := tokenFromFile(tokFile)
-	// || time.Now().After(tok.Expiry)
-	if err != nil || tok == nil {
+	if err != nil || tok == nil || time.Now().After(tok.Expiry) {
 		tok = getTokenFromWeb(config)
 		saveToken(tokFile, tok)
 	}

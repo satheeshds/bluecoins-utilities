@@ -13,7 +13,7 @@ type TransactionServiceImpl struct {
 	fileService file.FileService
 }
 
-const timeLayout = "02 Jan 2006"
+const timeLayout = "2 Jan 2006"
 
 func NewTransactionService() (*TransactionServiceImpl, error) {
 	fileService, err := file.NewFileService()
