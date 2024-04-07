@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -25,12 +26,26 @@ func getClient(config *oauth2.Config) *http.Client {
 	// The file token.json stores the user's access and refresh tokens, and is
 	// created automatically when the authorization flow completes for the first
 	// time.
-	tokFile := "token.json"
+	tokFile := filepath.Join(getExeDir(), "token.json")
 	tok, err := tokenFromFile(tokFile)
-	if err != nil || tok == nil || time.Now().After(tok.Expiry) {
-		tok = getTokenFromWeb(config)
-		saveToken(tokFile, tok)
+	if err == nil && tok != nil && time.Now().Before(tok.Expiry) {
+		return config.Client(context.Background(), tok)
 	}
+
+	if err != nil {
+		log.Printf("Error reading token file: %v", err)
+	}
+
+	if tok == nil {
+		log.Printf("Token is nil")
+	} else if time.Now().After(tok.Expiry) {
+		log.Printf("Token expired, now : %v, expiry: %v", time.Now(), tok.Expiry)
+	}
+
+	log.Printf("Regenerating token...")
+
+	tok = getTokenFromWeb(config)
+	saveToken(tokFile, tok)
 	return config.Client(context.Background(), tok)
 }
 
@@ -77,7 +92,8 @@ func saveToken(path string, token *oauth2.Token) {
 
 func NewGDriveService() (*GDriveServiceImpl, error) {
 	ctx := context.Background()
-	b, err := os.ReadFile("credentials.json")
+	credentialPath := filepath.Join(getExeDir(), "credentials.json")
+	b, err := os.ReadFile(credentialPath)
 	if err != nil {
 		log.Fatalf("Unable to read client secret file: %v", err)
 	}
@@ -164,4 +180,13 @@ func (g *GDriveServiceImpl) UploadFile(fileName string, source string) error {
 
 	return nil
 
+}
+
+func getExeDir() string {
+	exePath, err := os.Executable()
+	if err != nil {
+		log.Fatalf("Error getting executable directory: %v", err)
+	}
+	dir := filepath.Dir(exePath)
+	return dir
 }
