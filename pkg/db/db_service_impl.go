@@ -37,7 +37,7 @@ func (m *DBServiceImpl) GetTransactions(after time.Time, accountId int) ([]model
 	query := `
 		SELECT 
         	tt.transactionstableid, 
-        	tt.date, 
+        	datetime(tt.date) as date, 
         	tt.amount, 
         	tt.categoryid, 
         	it.itemname,
@@ -51,8 +51,8 @@ func (m *DBServiceImpl) GetTransactions(after time.Time, accountId int) ([]model
     	WHERE 
         	accountid = ? 
     	AND 
-        	tt.date between ? and ?
-		ORDER BY tt.date ASC;
+        	datetime(tt.date) between ? and ?
+		ORDER BY datetime(tt.date) ASC;
 		`
 	rows, err := m.db.Query(query, accountId, after, time.Now().AddDate(0, 0, 1))
 	if err != nil {
@@ -64,12 +64,18 @@ func (m *DBServiceImpl) GetTransactions(after time.Time, accountId int) ([]model
 	var labels string
 	for rows.Next() {
 		var transaction model.BluecoinsTransaction
-		err = rows.Scan(&transaction.ID, &transaction.Date, &amount, &transaction.Category, &transaction.Description, &labels)
+		var dateString string
+		err = rows.Scan(&transaction.ID, &dateString, &amount, &transaction.Category, &transaction.Description, &labels)
 		if err != nil {
 			return nil, err
 		}
 		transaction.Amount = float32(amount) / 1000000
 		transaction.Labels = strings.Split(labels, ",")
+
+		transaction.Date, err = time.Parse("2006-01-02 15:04:05", dateString)
+		if err != nil {
+			return nil, err
+		}
 
 		transactions = append(transactions, transaction)
 	}

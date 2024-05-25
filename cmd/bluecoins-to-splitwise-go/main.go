@@ -44,6 +44,7 @@ func main() {
 		}
 		transactions, err := bluecoinsService.GetTransactionsAfter(lastExpenseDate, a.ID)
 		if err != nil {
+			log.Printf("Error getting transactions after %v: for account id %v", lastExpenseDate, a.ID)
 			log.Fatalf("Error getting transactions: %v", err)
 		}
 
