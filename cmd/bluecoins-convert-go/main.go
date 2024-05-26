@@ -34,7 +34,7 @@ func main() {
 		log.Fatalf("Error creating Bluecoins service: %v", err)
 	}
 
-	transactionService, err := bank.NewTransactionService()
+	transactionService, err := bank.NewTransactionService(filePath)
 	if err != nil {
 		log.Fatalf("Error creating transaction service: %v", err)
 	}

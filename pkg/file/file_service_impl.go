@@ -15,7 +15,7 @@ func NewFileService() (*FileServiceImpl, error) {
 	return service, nil
 }
 
-func (f *FileServiceImpl) ReadTransactionRecords(filename string) ([][]string, error) {
+func (f *FileServiceImpl) ReadContents(filename string, separator rune) ([][]string, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(err)
@@ -23,7 +23,7 @@ func (f *FileServiceImpl) ReadTransactionRecords(filename string) ([][]string, e
 	defer file.Close()
 
 	reader := csv.NewReader(file)
-	reader.Comma = '\t'
+	reader.Comma = separator
 	// Set to -1 to allow for variable number of fields per record
 	reader.FieldsPerRecord = -1
 
