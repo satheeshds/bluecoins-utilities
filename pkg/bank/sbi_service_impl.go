@@ -67,6 +67,8 @@ func (t *SBITransactionServiceImpl) GetBankTransactions(filename string) ([]mode
 			Description:     record[2],
 			TransactionType: transactionType,
 			Amount:          amount,
+			AccountName:     "SBI Technopark",
+			AccountType:     "Bank",
 		}
 	}
 	return transactions, nil

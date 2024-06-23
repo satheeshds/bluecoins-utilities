@@ -17,6 +17,8 @@ type BankTransaction struct {
 	Description     string
 	TransactionType TransactionType
 	Amount          float64
+	AccountName     string
+	AccountType     string
 }
 
 func (t *BankTransaction) CleanDescription() string {

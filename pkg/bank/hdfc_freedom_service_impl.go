@@ -39,7 +39,8 @@ func (t *HdfcFreedomTransactionServiceImpl) GetBankTransactions(filename string)
 		date, err := time.Parse(timeLayout, record[timeIndex])
 		if err != nil {
 			log.Printf("Error parsing date (%s): %v", record[timeIndex], err)
-			return nil, err
+			continue
+			// return nil, err
 		}
 
 		var transactionType model.TransactionType
@@ -73,6 +74,8 @@ func (t *HdfcFreedomTransactionServiceImpl) GetBankTransactions(filename string)
 			Description:     description,
 			TransactionType: transactionType,
 			Amount:          amount,
+			AccountName:     "Hdfc Freedom",
+			AccountType:     "Credit Card",
 		}
 		log.Printf("Transaction: %v", transactions[i])
 	}

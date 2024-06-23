@@ -24,14 +24,14 @@ func (t *TransformServiceImp) TrasformBankToBluecoinTransactions(bankTransaction
 			bankTransaction.Date.Format("01/02/2006"),
 			bankTransaction.Description, // TODO: Add a function to clean the description
 			strconv.FormatFloat(bankTransaction.Amount, 'f', 2, 32),
-			"",               // Parent Category
-			"",               // Category
-			"Bank",           // Account Type
-			"SBI Technopark", // Account
-			"",               // Notes
-			"",               // Label
-			"",               // Status
-			"",               // Split
+			"",                          // Parent Category
+			"",                          // Category
+			bankTransaction.AccountType, // Account Type
+			bankTransaction.AccountName, // Account
+			"",                          // Notes
+			"",                          // Label
+			"",                          // Status
+			"",                          // Split
 		}
 		bluecoinsTransactions[i+1] = bluecoinsTransaction
 	}
