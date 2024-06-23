@@ -41,7 +41,7 @@ func (m *DBServiceImpl) GetTransactions(after time.Time, accountId int) ([]model
         	tt.amount, 
         	tt.categoryid, 
         	it.itemname,
-        	(SELECT GROUP_CONCAT(lt.labelname) FROM labelstable lt WHERE lt.transactionidlabels = tt.transactionstableid) as labels
+        	IFNULL((SELECT GROUP_CONCAT(lt.labelname) FROM labelstable lt WHERE lt.transactionidlabels = tt.transactionstableid), '') as labels
     	FROM 
         	transactionstable tt 
     	INNER JOIN 
